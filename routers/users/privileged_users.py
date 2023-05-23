@@ -1,4 +1,16 @@
-from . import *
+from typing import Annotated
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
+from routers import auth
+import services
+import dependencies
+import models
+import schemas
+
+from database import engine
+
+models.Base.metadata.create_all(bind=engine)
 
 router = APIRouter(
     prefix='/user',
@@ -18,7 +30,7 @@ def create_user(
     if not current_user.role:
         raise HTTPException(status_code=403)
     user.password = auth.get_password_hash(user.password)
-    return crud.create_user(db=db, user=user)
+    return services.users.create_user(db=db, user=user)
 
 
 @router.post('/{user_id}/favorite-films/')
@@ -33,7 +45,7 @@ def add_user_favorite_film(
 ):
     if not current_user.role:
         raise HTTPException(status_code=403)
-    favorite_film = crud.add_users_favorite_film(db, user_id, film_id)
+    favorite_film = services.users.add_users_favorite_film(db, user_id, film_id)
     return favorite_film
 
 
@@ -48,8 +60,8 @@ def read_users_favorite_films(
 ):
     if not current_user.role:
         raise HTTPException(status_code=403)
-    user = schemas.User.from_orm(crud.get_user_by_id(db, user_id))
-    return crud.get_users_favorite_films(db, user)
+    user = schemas.User.from_orm(services.users.get_user_by_id(db, user_id))
+    return services.users.get_users_favorite_films(db, user)
 
 
 @router.post('/{user_id}/favorite-actors')
@@ -64,7 +76,7 @@ def add_users_favorite_actor(
 ):
     if not current_user.role:
         raise HTTPException(status_code=403)
-    return crud.add_users_favorite_actor(db, user_id, actor_id)
+    return services.users.add_users_favorite_actor(db, user_id, actor_id)
 
 
 @router.get('/{user_id}/favorite-actors', response_model=list[schemas.Actor])
@@ -78,5 +90,5 @@ def read_users_favorite_actors(
 ):
     if not current_user.role:
         raise HTTPException(status_code=403)
-    user = schemas.User.from_orm(crud.get_user_by_id(db, user_id))
-    return crud.get_users_favorite_actors(db, user)
+    user = schemas.User.from_orm(services.users.get_user_by_id(db, user_id))
+    return services.users.get_users_favorite_actors(db, user)

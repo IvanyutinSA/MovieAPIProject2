@@ -1,4 +1,19 @@
-from . import *
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
+from routers import auth
+import services
+import dependencies
+import models
+import schemas
+
+from database import engine
+
+
+models.Base.metadata.create_all(bind=engine)
+
 
 router = APIRouter(
     prefix='/actor',
@@ -17,7 +32,7 @@ def add_actor(
 ):
     if not current_user.role:
         raise HTTPException(status_code=403)
-    return crud.add_actor(db, actor)
+    return services.actors.add_actor(db, actor)
 
 
 @router.post('/{actor_id}/films')
@@ -32,7 +47,7 @@ def add_actors_film(
 ):
     if not current_user.role:
         raise HTTPException(status_code=403)
-    return crud.add_actors_film(db, actor_id, film_id)
+    return services.actors.add_actors_film(db, actor_id, film_id)
 
 
 @router.put('/{actor_id}')
@@ -47,7 +62,7 @@ def update_actor(
 ):
     if not current_user.role:
         raise HTTPException(status_code=403)
-    return crud.update_actor(db, actor_id, actor)
+    return services.actors.update_actor(db, actor_id, actor)
 
 
 @router.delete('/{actor_id}')
@@ -61,4 +76,4 @@ def delete_actor(
 ):
     if not current_user.role:
         raise HTTPException(status_code=403)
-    return crud.delete_actor(db, actor_id)
+    return services.actors.delete_actor(db, actor_id)

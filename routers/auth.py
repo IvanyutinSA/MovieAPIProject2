@@ -7,13 +7,15 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
-import crud
 import dependencies
 import schemas
+import services
 
-SECRET_KEY = 'ab19ff8a04032e56951848ce4ab5fdd150082806a68116388d387a95e75072fb'
-ALGORITHM = 'HS256'
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+import os
+
+SECRET_KEY = os.environ['SECRET_KEY']
+ALGORITHM = os.environ['ALGORITHM']
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ['ACCESS_TOKEN_EXPIRE_MINUTES'])
 
 pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 
@@ -38,7 +40,7 @@ def authenticate_user(
         password: str,
         db: Session = Depends(dependencies.get_db),
 ):
-    user = crud.get_user_by_name(db, username)
+    user = services.users.get_user_by_name(db, username)
     if not user:
         return False
     if not verify_password(password, user.hashed_password):
@@ -77,7 +79,7 @@ def get_current_user(
         token_data = schemas.TokenData(username=username)
     except JWTError:
         raise credentials_exception
-    user = crud.get_user_by_name(db, token_data.username)
+    user = services.users.get_user_by_name(db, token_data.username)
     if user is None:
         raise credentials_exception
     return user
